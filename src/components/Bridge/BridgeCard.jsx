@@ -6,17 +6,18 @@ import WalletIcon from "@mui/icons-material/Wallet";
 
 const BridgeCard = ({ direction }) => {
   const [open, setOpen] = useState(false);
-  const [network, setNetwork] = useState("Polygon");
+  const [network, setNetwork] = useState("Ethereum");
+  const [token, setToken] = useState("BnM");
   return (
     <div className="max-w-[700px]  bg-white border-slate-200 border rounded-xl flex flex-col">
-      <TokenSelectModal open={open} close={setOpen} />
+      <TokenSelectModal open={open} close={setOpen} changeToken={setToken} />
       <div className="w-full border-b border-slate-200 flex justify-start p-3 gap-3">
         <p className="text-gray-500 my-auto">{direction}</p>
         <NetworkSelect network={network} changeNetwork={setNetwork} />
       </div>
       <div className="w-full flex justify-between p-5">
         <h1 className="my-auto text-4xl text-gray-500">0.0</h1>
-        <TokenSelect onClick={() => setOpen((prev) => !prev)} />
+        <TokenSelect token={token} onClick={() => setOpen((prev) => !prev)} />
       </div>
       <div className="w-full flex justify-between p-5">
         <h1 className="my-auto text-2xl text-gray-500">
