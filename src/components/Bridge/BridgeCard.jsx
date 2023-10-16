@@ -3,8 +3,23 @@ import TokenSelectModal from "./TokenSelectModal";
 import TokenSelect from "./TokenSelect";
 import NetworkSelect from "./NetworkSelect";
 import WalletIcon from "@mui/icons-material/Wallet";
+import { useMetamask } from "@thirdweb-dev/react";
+import { Sepolia } from "@thirdweb-dev/chains";
+import { ConnectWallet } from "@thirdweb-dev/react";
 
 const BridgeCard = ({ direction }) => {
+  const connect = useMetamask();
+
+  const handleConnect = async () => {
+    try {
+      const wallet = await connect();
+
+      console.log("connected to", wallet);
+    } catch (e) {
+      console.error("failed to connect", e);
+    }
+  };
+
   const [open, setOpen] = useState(false);
   const [network, setNetwork] = useState("Ethereum");
   const [token, setToken] = useState("BnM");
@@ -47,7 +62,14 @@ const BridgeCard = ({ direction }) => {
         <h1 className="my-auto text-2xl text-gray-500">
           $ {usdValue.toFixed(2)}
         </h1>
-        <button className="rounded-lg bg-gray-100 p-2 my-auto hover:bg-gray-200 transition duration-200">
+        <button
+          className="rounded-lg bg-gray-100 p-2 my-auto hover:bg-gray-200 transition duration-200"
+          onClick={() =>
+            connect({
+              chainId: Sepolia.chainId,
+            })
+          }
+        >
           <WalletIcon /> connect wallet
         </button>
       </div>
