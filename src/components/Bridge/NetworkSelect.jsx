@@ -8,7 +8,7 @@ const NetworkSelect = ({ network, changeNetwork }) => {
   const [open, setOpen] = useState(false);
   return (
     <div
-      className="relative bg-gray-100 rounded-lg my-auto text-sm font-medium py-1 px-2 flex gap-2 cursor-pointer items-center"
+      className="relative bg-gray-100 hover:bg-gray-200 transition duration-200 rounded-lg my-auto text-sm font-medium py-1 px-2 flex gap-2 cursor-pointer items-center"
       onClick={() => setOpen((prev) => !prev)}
     >
       <img

@@ -6,7 +6,7 @@ import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 const TokenSelect = ({ token, onClick }) => {
   return (
     <div
-      className="rounded-full bg-gray-100 py-2 px-4 text-3xl cursor-pointer flex gap-3 items-center"
+      className="shrink-0 rounded-full bg-gray-100 hover:bg-gray-200 transition duration-200 py-2 px-4 text-3xl cursor-pointer flex gap-3 items-center"
       onClick={onClick}
     >
       <img

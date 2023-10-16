@@ -1,5 +1,3 @@
-//import "./App.css";
-//import "../styles/globals.css";
 import Bridge from "./components/Bridge/Bridge";
 import Heading from "./components/Heading";
 import TopBar from "./components/TopBar";
