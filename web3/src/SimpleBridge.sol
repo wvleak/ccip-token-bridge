@@ -4,9 +4,10 @@ pragma solidity 0.8.19;
 import {IRouterClient} from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol";
 import {OwnerIsCreator} from "@chainlink/contracts-ccip/src/v0.8/shared/access/OwnerIsCreator.sol";
 import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
+import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver.sol";
 import {IERC20} from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/token/ERC20/IERC20.sol";
 
-contract SimpleBridge {
+contract SimpleBridge is OwnerIsCreator {
     error DestinationChainNotAllowlisted(uint64 destinationChainSelector); // Used when the destination chain has not been allowlisted by the contract owner.
 
     // Event emitted when the tokens are transferred to an account on another chain.
@@ -25,15 +26,53 @@ contract SimpleBridge {
 
     IRouterClient private s_router;
 
-    constructor(address _router) {
-        s_router = IRouterClient(_router);
-    }
+    // constructor(address _router) {
+    //     s_router = IRouterClient(_router);
+    // }
 
     modifier onlyAllowlistedChain(uint64 _destinationChainSelector) {
         if (!allowlistedChains[_destinationChainSelector])
             revert DestinationChainNotAllowlisted(_destinationChainSelector);
         _;
     }
+
+    function bridge(
+        uint64 _destinationChainSelector,
+        address _receiver,
+        address _token,
+        uint256 _amount
+    ) external payable {
+        _transferTokens(_destinationChainSelector, _receiver, _token, _amount);
+    }
+
+    function swapAndBridge(
+        uint64 _destinationChainSelector,
+        address _receiver,
+        address _fromToken,
+        address _toToken,
+        uint256 _fromAmount
+    ) external payable {
+        uint256 _toAmount = _getSwapAmount(_fromToken, _toToken, _fromAmount);
+        _transferTokens(
+            _destinationChainSelector,
+            _receiver,
+            _toToken,
+            _toAmount
+        );
+    }
+
+    function getPrice() public {}
+
+    function _getPrice(
+        address _fromToken,
+        address _toToken
+    ) internal returns (uint256) {}
+
+    function provideLiquidity() external {}
+
+    function withdrawToken() external {}
+
+    function _ccipReceive() external {}
 
     /// @notice Transfer tokens to receiver on the destination chain.
     /// @notice Pay in native gas such as ETH on Ethereum or MATIC on Polgon.
@@ -45,13 +84,13 @@ contract SimpleBridge {
     /// @param _token token address.
     /// @param _amount token amount.
     /// @return messageId The ID of the message that was sent.
-    function bridge(
+    function _transferTokens(
         uint64 _destinationChainSelector,
         address _receiver,
         address _token,
         uint256 _amount
     )
-        external
+        internal
         onlyOwner
         onlyAllowlistedChain(_destinationChainSelector)
         returns (bytes32 messageId)
@@ -98,18 +137,6 @@ contract SimpleBridge {
         return messageId;
     }
 
-    function bridgeAndSwap() external {}
-
-    function onSwap() external {}
-
-    function getPrice() public {}
-
-    function _getPrice() internal {}
-
-    function provideLiquidity() external {}
-
-    function withdrawToken() external {}
-
     function _buildCCIPMessage(
         address _receiver,
         address _token,
@@ -137,5 +164,36 @@ contract SimpleBridge {
                 // Set the feeToken to a feeTokenAddress, indicating specific asset will be used for fees
                 feeToken: _feeTokenAddress
             });
+    }
+
+    function _getSwapAmount(
+        address _fromToken,
+        address _toToken,
+        uint256 _amount
+    ) internal returns (uint256) {
+        return _amount * _getPrice(_fromToken, _toToken);
+    }
+
+    /// @notice Fallback function to allow the contract to receive Ether.
+    /// @dev This function has no function body, making it a default function for receiving Ether.
+    /// It is automatically called when Ether is transferred to the contract without any data.
+    receive() external payable {}
+
+    /// @notice Allows the contract owner to withdraw the entire balance of Ether from the contract.
+    /// @dev This function reverts if there are no funds to withdraw or if the transfer fails.
+    /// It should only be callable by the owner of the contract.
+    /// @param _beneficiary The address to which the Ether should be transferred.
+    function withdraw(address _beneficiary) public onlyOwner {
+        // Retrieve the balance of this contract
+        uint256 amount = address(this).balance;
+
+        // Revert if there is nothing to withdraw
+        if (amount == 0) revert NothingToWithdraw();
+
+        // Attempt to send the funds, capturing the success status and discarding any return data
+        (bool sent, ) = _beneficiary.call{value: amount}("");
+
+        // Revert if the send failed, with information about the attempted transfer
+        if (!sent) revert FailedToWithdrawEth(msg.sender, _beneficiary, amount);
     }
 }
