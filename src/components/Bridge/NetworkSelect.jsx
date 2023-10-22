@@ -4,7 +4,7 @@ import { Ethereum } from "../../assets";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 
-const NetworkSelect = ({ network, changeNetwork }) => {
+const NetworkSelect = ({ network, changeNetwork, direction }) => {
   const [open, setOpen] = useState(false);
   return (
     <div
@@ -24,6 +24,7 @@ const NetworkSelect = ({ network, changeNetwork }) => {
         open={open}
         onSelect={changeNetwork}
         network={network}
+        direction={direction}
       />
     </div>
   );

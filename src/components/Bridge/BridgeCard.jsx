@@ -3,34 +3,42 @@ import TokenSelectModal from "./TokenSelectModal";
 import TokenSelect from "./TokenSelect";
 import NetworkSelect from "./NetworkSelect";
 import WalletIcon from "@mui/icons-material/Wallet";
-import { useMetamask } from "@thirdweb-dev/react";
-import { Sepolia } from "@thirdweb-dev/chains";
-import { ConnectWallet } from "@thirdweb-dev/react";
+import SkeletonLoader from "../SkeletonLoader";
 
-const BridgeCard = ({ direction }) => {
-  const connect = useMetamask();
+const BridgeCard = ({
+  direction,
+  network,
+  setNetwork,
+  token,
+  setToken,
+  isLoading,
+  onPriceChange,
+}) => {
+  const [open, setOpen] = useState(false);
+  const [number, setNumber] = useState(null);
+  const [usdValue, setUsdValue] = useState(0);
+  const [balance, setBalance] = useState(0);
 
-  const handleConnect = async () => {
-    try {
-      const wallet = await connect();
-
-      console.log("connected to", wallet);
-    } catch (e) {
-      console.error("failed to connect", e);
-    }
+  const formatValue = (value) => {
+    const stringValue = value.toFixed(2).toString();
+    const splitValue = stringValue.split(".");
+    return (
+      <>
+        {splitValue[0]}.<span className="text-lg">{splitValue[1]}</span>
+      </>
+    );
   };
 
-  const [open, setOpen] = useState(false);
-  const [network, setNetwork] = useState("Ethereum");
-  const [token, setToken] = useState("BnM");
-  const [number, setNumber] = useState(null);
-  const [usdValue, setUsdValue] = useState(0.0);
   return (
     <div className="max-w-[700px]  bg-white border-slate-200 border rounded-xl flex flex-col">
       <TokenSelectModal open={open} close={setOpen} changeToken={setToken} />
       <div className="w-full border-b border-slate-200 flex justify-start p-3 gap-3">
         <p className="text-gray-500 my-auto">{direction}</p>
-        <NetworkSelect network={network} changeNetwork={setNetwork} />
+        <NetworkSelect
+          network={network}
+          changeNetwork={setNetwork}
+          direction={direction}
+        />
       </div>
       <div className="w-full flex justify-between p-5">
         {direction == "From" ? (
@@ -40,9 +48,14 @@ const BridgeCard = ({ direction }) => {
             placeholder="0.0"
             min={0}
             value={number}
-            onChange={() => setNumber(value)}
+            onChange={() => {
+              //setNumber(value);
+              onPriceChange();
+            }}
             style={{ WebkitAppearance: "none" }}
           />
+        ) : isLoading ? (
+          <SkeletonLoader style="w-[70%] h-9" />
         ) : (
           <input
             type="number"
@@ -59,19 +72,25 @@ const BridgeCard = ({ direction }) => {
         <TokenSelect token={token} onClick={() => setOpen((prev) => !prev)} />
       </div>
       <div className="w-full flex justify-between p-5">
-        <h1 className="my-auto text-2xl text-gray-500">
-          $ {usdValue.toFixed(2)}
-        </h1>
-        <button
-          className="rounded-lg bg-gray-100 p-2 my-auto hover:bg-gray-200 transition duration-200"
-          onClick={() =>
-            connect({
-              chainId: Sepolia.chainId,
-            })
-          }
-        >
-          <WalletIcon /> connect wallet
-        </button>
+        {isLoading ? (
+          <SkeletonLoader style="w-[30%] h-9" />
+        ) : (
+          <h1 className="my-auto text-2xl text-gray-500">
+            $ {formatValue(usdValue)}
+          </h1>
+        )}
+        <div className="flex items-center gap-2">
+          <WalletIcon
+            className={direction == "From" ? "text-[#086bff]" : "text-gray-500"}
+          />
+          <h1
+            className={`my-auto text-2xl ${
+              direction == "From" ? "text-[#086bff]" : "text-gray-500"
+            }`}
+          >
+            {formatValue(balance)}
+          </h1>
+        </div>
       </div>
     </div>
   );

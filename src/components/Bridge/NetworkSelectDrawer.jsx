@@ -1,6 +1,6 @@
 import React from "react";
 
-const NetworkSelectDrawer = ({ open, onSelect, network }) => {
+const NetworkSelectDrawer = ({ open, onSelect, direction }) => {
   const networks = [
     "Ethereum",
     "Arbitrum One",
@@ -19,7 +19,7 @@ const NetworkSelectDrawer = ({ open, onSelect, network }) => {
           <li className="p-1">
             <button
               className="hover:bg-gray-300 hover:bg-opacity-30 w-full rounded-md text-left flex items-center gap-2 p-2"
-              onClick={() => onSelect(network)}
+              onClick={() => onSelect(direction, network)}
             >
               <img
                 src={`src/assets/networks/${network}.png`}
