@@ -8,6 +8,6 @@ contract TestSimpleBridge is Test {
     SimpleBridge public bridge;
 
     function setUp() public {
-        bridge = new SimpleBridge();
+        bridge = new SimpleBridge(address(1));
     }
 }

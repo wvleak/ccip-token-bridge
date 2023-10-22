@@ -4,10 +4,13 @@ pragma solidity 0.8.19;
 import {IRouterClient} from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol";
 import {OwnerIsCreator} from "@chainlink/contracts-ccip/src/v0.8/shared/access/OwnerIsCreator.sol";
 import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
-import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver.sol";
 import {IERC20} from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/token/ERC20/IERC20.sol";
 
 contract SimpleBridge is OwnerIsCreator {
+    // Custom errors to provide more descriptive revert messages.
+    error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees); // Used to make sure contract has enough balance to cover the fees.
+    error NothingToWithdraw(); // Used when trying to withdraw Ether but there's nothing to withdraw.
+    error FailedToWithdrawEth(address owner, address target, uint256 value); // Used when the withdrawal of Ether fails.
     error DestinationChainNotAllowlisted(uint64 destinationChainSelector); // Used when the destination chain has not been allowlisted by the contract owner.
 
     // Event emitted when the tokens are transferred to an account on another chain.
@@ -26,9 +29,9 @@ contract SimpleBridge is OwnerIsCreator {
 
     IRouterClient private s_router;
 
-    // constructor(address _router) {
-    //     s_router = IRouterClient(_router);
-    // }
+    constructor(address _router) {
+        s_router = IRouterClient(_router);
+    }
 
     modifier onlyAllowlistedChain(uint64 _destinationChainSelector) {
         if (!allowlistedChains[_destinationChainSelector])
@@ -42,6 +45,7 @@ contract SimpleBridge is OwnerIsCreator {
         address _token,
         uint256 _amount
     ) external payable {
+        IERC20(_token).transferFrom(msg.sender, address(this), _amount);
         _transferTokens(_destinationChainSelector, _receiver, _token, _amount);
     }
 
@@ -52,7 +56,8 @@ contract SimpleBridge is OwnerIsCreator {
         address _toToken,
         uint256 _fromAmount
     ) external payable {
-        uint256 _toAmount = _getSwapAmount(_fromToken, _toToken, _fromAmount);
+        IERC20(_fromToken).transferFrom(msg.sender, address(this), _fromAmount);
+        uint256 _toAmount = getSwapAmount(_fromToken, _toToken, _fromAmount);
         _transferTokens(
             _destinationChainSelector,
             _receiver,
@@ -61,18 +66,47 @@ contract SimpleBridge is OwnerIsCreator {
         );
     }
 
-    function getPrice() public {}
-
     function _getPrice(
         address _fromToken,
         address _toToken
-    ) internal returns (uint256) {}
+    ) internal view returns (uint256) {
+        uint256 fromBalance = IERC20(_fromToken).balanceOf(address(this));
+        uint256 toBalance = IERC20(_toToken).balanceOf(address(this));
 
-    function provideLiquidity() external {}
+        require(fromBalance != 0 && toBalance != 0, "No liquidity");
 
-    function withdrawToken() external {}
+        return toBalance / fromBalance;
+    }
 
-    function _ccipReceive() external {}
+    /// @notice Allows a user to provide liquidity for a token pair
+    /// @dev the amount to provide for both token is the same to not impact the price
+    /// @param _tokenA the address of the first token in the pair
+    /// @param _tokenB the address of the other token in the pair
+    function provideLiquidity(
+        address _tokenA,
+        address _tokenB,
+        uint256 _amount
+    ) external {
+        IERC20(_tokenA).transferFrom(msg.sender, address(this), _amount);
+        IERC20(_tokenB).transferFrom(msg.sender, address(this), _amount);
+    }
+
+    /// @notice Allows the owner of the contract to withdraw all tokens of a specific ERC20 token.
+    /// @dev This function reverts with a 'NothingToWithdraw' error if there are no tokens to withdraw.
+    /// @param _beneficiary The address to which the tokens will be sent.
+    /// @param _token The contract address of the ERC20 token to be withdrawn.
+    function withdrawToken(
+        address _beneficiary,
+        address _token
+    ) public onlyOwner {
+        // Retrieve the balance of this contract
+        uint256 amount = IERC20(_token).balanceOf(address(this));
+
+        // Revert if there is nothing to withdraw
+        if (amount == 0) revert NothingToWithdraw();
+
+        IERC20(_token).transfer(_beneficiary, amount);
+    }
 
     /// @notice Transfer tokens to receiver on the destination chain.
     /// @notice Pay in native gas such as ETH on Ethereum or MATIC on Polgon.
@@ -166,11 +200,11 @@ contract SimpleBridge is OwnerIsCreator {
             });
     }
 
-    function _getSwapAmount(
+    function getSwapAmount(
         address _fromToken,
         address _toToken,
         uint256 _amount
-    ) internal returns (uint256) {
+    ) public view returns (uint256) {
         return _amount * _getPrice(_fromToken, _toToken);
     }
 
