@@ -1,6 +1,4 @@
 import React from "react";
-import { Ethereum } from "../../assets";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 
 const TokenSelect = ({ token, onClick }) => {
@@ -10,7 +8,7 @@ const TokenSelect = ({ token, onClick }) => {
       onClick={onClick}
     >
       <img
-        src={Ethereum}
+        src="/src/assets/networks/Sepolia.png"
         alt="logo"
         width={30}
         height={30}

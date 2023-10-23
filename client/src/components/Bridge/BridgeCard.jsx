@@ -13,6 +13,7 @@ const BridgeCard = ({
   setToken,
   isLoading,
   onPriceChange,
+  swapAmount,
 }) => {
   const [open, setOpen] = useState(false);
   const [number, setNumber] = useState(null);
@@ -47,10 +48,9 @@ const BridgeCard = ({
             className="input outline-none my-auto text-4xl text-black w-[80%]"
             placeholder="0.0"
             min={0}
-            value={number}
-            onChange={() => {
-              //setNumber(value);
-              onPriceChange();
+            value={swapAmount}
+            onChange={(e) => {
+              onPriceChange(e.target.value);
             }}
             style={{ WebkitAppearance: "none" }}
           />

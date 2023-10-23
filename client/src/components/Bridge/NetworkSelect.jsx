@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import NetworkSelectDrawer from "./NetworkSelectDrawer";
-import { Ethereum } from "../../assets";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 
 const NetworkSelect = ({ network, changeNetwork, direction }) => {
   const [open, setOpen] = useState(false);

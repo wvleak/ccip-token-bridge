@@ -2,12 +2,12 @@ import React from "react";
 
 const NetworkSelectDrawer = ({ open, onSelect, direction }) => {
   const networks = [
-    "Ethereum",
-    "Arbitrum One",
-    "Polygon",
-    "OP",
-    "BNB Smart Chain",
-    "Avalanche C-Chain",
+    "Sepolia",
+    "Arbitrum Goerli",
+    "Mumbai",
+    "OP Testnet",
+    "BNB Testnet",
+    "Avalanche Fuji",
   ];
   return (
     <div
