@@ -7,13 +7,11 @@ import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.s
 import {IERC20} from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/token/ERC20/IERC20.sol";
 
 contract SimpleBridge is OwnerIsCreator {
-    // Custom errors to provide more descriptive revert messages.
     error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees); // Used to make sure contract has enough balance to cover the fees.
     error NothingToWithdraw(); // Used when trying to withdraw Ether but there's nothing to withdraw.
     error FailedToWithdrawEth(address owner, address target, uint256 value); // Used when the withdrawal of Ether fails.
     error DestinationChainNotAllowlisted(uint64 destinationChainSelector); // Used when the destination chain has not been allowlisted by the contract owner.
 
-    // Event emitted when the tokens are transferred to an account on another chain.
     event TokensTransferred(
         bytes32 indexed messageId, // The unique ID of the message.
         uint64 indexed destinationChainSelector, // The chain selector of the destination chain.
@@ -39,43 +37,125 @@ contract SimpleBridge is OwnerIsCreator {
         _;
     }
 
+    /// @dev Updates the allowlist status of a destination chain for transactions.
+    /// @notice This function can only be called by the owner.
+    /// @param _destinationChainSelector The selector of the destination chain to be updated.
+    /// @param allowed The allowlist status to be set for the destination chain.
+    function allowlistDestinationChain(
+        uint64 _destinationChainSelector,
+        bool allowed
+    ) external onlyOwner {
+        allowlistedChains[_destinationChainSelector] = allowed;
+    }
+
+    /// @notice Bridge token to destination chain
+    /// @dev The user should forward enough native tokens to cover the CCIP fees
+    /// @param _destinationChainSelector The identifier (aka selector) for the destination blockchain.
+    /// @param _receiver The address of the recipient on the destination blockchain.
+    /// @param _token token address.
+    /// @param _amount token amount.
+    /// @return messageId The ID of the message that was sent.
     function bridge(
         uint64 _destinationChainSelector,
         address _receiver,
         address _token,
         uint256 _amount
-    ) external payable {
+    ) external payable returns (bytes32) {
         IERC20(_token).transferFrom(msg.sender, address(this), _amount);
-        _transferTokens(_destinationChainSelector, _receiver, _token, _amount);
+        return
+            _transferTokens(
+                _destinationChainSelector,
+                _receiver,
+                _token,
+                _amount
+            );
     }
 
+    /// @notice Swap and then transfer token to destination chain
+    /// @dev The user should forward enough native tokens to cover the CCIP fees
+    /// @param _destinationChainSelector The identifier (aka selector) for the destination blockchain.
+    /// @param _receiver The address of the recipient on the destination blockchain.
+    /// @param _fromToken source token address.
+    /// @param _toToken destination token address.
+    /// @param _fromAmount source token amount.
+    /// @return messageId The ID of the message that was sent.
     function swapAndBridge(
         uint64 _destinationChainSelector,
         address _receiver,
         address _fromToken,
         address _toToken,
         uint256 _fromAmount
-    ) external payable {
+    ) external payable returns (bytes32) {
         IERC20(_fromToken).transferFrom(msg.sender, address(this), _fromAmount);
         uint256 _toAmount = getSwapAmount(_fromToken, _toToken, _fromAmount);
-        _transferTokens(
-            _destinationChainSelector,
-            _receiver,
-            _toToken,
-            _toAmount
-        );
+        require(_toAmount != 0, "Nothing to swap");
+        return
+            _transferTokens(
+                _destinationChainSelector,
+                _receiver,
+                _toToken,
+                _toAmount
+            );
     }
 
-    function _getPrice(
+    /// @notice Get CCIP fees in native token
+    /// @param _destinationChainSelector The identifier (aka selector) for the destination blockchain.
+    /// @param _receiver The address of the recipient on the destination blockchain.
+    /// @param _token token address.
+    /// @param _amount token amount.
+    /// @return the fees.
+    function getBridgeFees(
+        uint64 _destinationChainSelector,
+        address _receiver,
+        address _token,
+        uint256 _amount
+    ) external view returns (uint256) {
+        return _getFees(_destinationChainSelector, _receiver, _token, _amount);
+    }
+
+    /// @notice Get CCIP fees in native token
+    /// @param _destinationChainSelector The identifier (aka selector) for the destination blockchain.
+    /// @param _receiver The address of the recipient on the destination blockchain.
+    /// @param _fromToken source token address.
+    /// @param _toToken destination token address.
+    /// @param _fromAmount source token amount.
+    /// @return the fees.
+    function getSwapAndBridgeFees(
+        uint64 _destinationChainSelector,
+        address _receiver,
         address _fromToken,
-        address _toToken
+        address _toToken,
+        uint256 _fromAmount
+    ) external view returns (uint256) {
+        uint256 _toAmount = getSwapAmount(_fromToken, _toToken, _fromAmount);
+        require(_toAmount != 0, "Nothing to swap");
+        return
+            _getFees(_destinationChainSelector, _receiver, _toToken, _toAmount);
+    }
+
+    /// @notice Get CCIP fees in native token
+    /// @param _destinationChainSelector The identifier (aka selector) for the destination blockchain.
+    /// @param _receiver The address of the recipient on the destination blockchain.
+    /// @param _token token address.
+    /// @param _amount token amount.
+    /// @return the fees.
+    function _getFees(
+        uint64 _destinationChainSelector,
+        address _receiver,
+        address _token,
+        uint256 _amount
     ) internal view returns (uint256) {
-        uint256 fromBalance = IERC20(_fromToken).balanceOf(address(this));
-        uint256 toBalance = IERC20(_toToken).balanceOf(address(this));
+        // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message
+        // address(0) means fees are paid in native gas
+        Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(
+            _receiver,
+            _token,
+            _amount,
+            address(0)
+        );
 
-        require(fromBalance != 0 && toBalance != 0, "No liquidity");
-
-        return toBalance / fromBalance;
+        // Get the fee required to send the message
+        return s_router.getFee(_destinationChainSelector, evm2AnyMessage);
     }
 
     /// @notice Allows a user to provide liquidity for a token pair
@@ -171,6 +251,13 @@ contract SimpleBridge is OwnerIsCreator {
         return messageId;
     }
 
+    /// @notice Construct a CCIP message.
+    /// @dev This function will create an EVM2AnyMessage struct with all the necessary information for tokens transfer.
+    /// @param _receiver The address of the receiver.
+    /// @param _token The token to be transferred.
+    /// @param _amount The amount of the token to be transferred.
+    /// @param _feeTokenAddress The address of the token used for fees. Set address(0) for native gas.
+    /// @return Client.EVM2AnyMessage Returns an EVM2AnyMessage struct which contains information for sending a CCIP message.
     function _buildCCIPMessage(
         address _receiver,
         address _token,
@@ -200,12 +287,23 @@ contract SimpleBridge is OwnerIsCreator {
             });
     }
 
+    /// @notice Get the quote for a swap
+    /// @param _fromToken the source token
+    /// @param _toToken the destination token
+    /// @param _amount the amount to swap
+    /// @return the quote
     function getSwapAmount(
         address _fromToken,
         address _toToken,
         uint256 _amount
     ) public view returns (uint256) {
-        return _amount * _getPrice(_fromToken, _toToken);
+        uint256 fromBalance = IERC20(_fromToken).balanceOf(address(this));
+        uint256 toBalance = IERC20(_toToken).balanceOf(address(this));
+
+        require(_amount != 0, "Insufficient amount");
+        require(fromBalance != 0 && toBalance != 0, "No liquidity");
+
+        return (_amount * toBalance) / fromBalance;
     }
 
     /// @notice Fallback function to allow the contract to receive Ether.
