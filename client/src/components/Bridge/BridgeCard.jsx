@@ -13,12 +13,14 @@ const BridgeCard = ({
   setToken,
   isLoading,
   onPriceChange,
-  swapAmount,
+  amount,
+  balance,
+  usdPrice,
 }) => {
   const [open, setOpen] = useState(false);
   const [number, setNumber] = useState(null);
   const [usdValue, setUsdValue] = useState(0);
-  const [balance, setBalance] = useState(0);
+  //const [balance, setBalance] = useState(0);
 
   const formatValue = (value) => {
     const stringValue = value.toFixed(2).toString();
@@ -48,7 +50,7 @@ const BridgeCard = ({
             className="input outline-none my-auto text-4xl text-black w-[80%]"
             placeholder="0.0"
             min={0}
-            value={swapAmount}
+            value={amount}
             onChange={(e) => {
               onPriceChange(e.target.value);
             }}
@@ -63,7 +65,7 @@ const BridgeCard = ({
             placeholder="0.0"
             disabled
             min={0}
-            value={number}
+            value={amount}
             onChange={() => setNumber(value)}
             style={{ WebkitAppearance: "none" }}
           />
@@ -76,7 +78,7 @@ const BridgeCard = ({
           <SkeletonLoader style="w-[30%] h-9" />
         ) : (
           <h1 className="my-auto text-2xl text-gray-500">
-            $ {formatValue(usdValue)}
+            $ {formatValue(usdPrice)}
           </h1>
         )}
         <div className="flex items-center gap-2">
@@ -88,7 +90,8 @@ const BridgeCard = ({
               direction == "From" ? "text-[#086bff]" : "text-gray-500"
             }`}
           >
-            {formatValue(balance)}
+            {formatValue(parseFloat(balance))}
+            {/* {balance} */}
           </h1>
         </div>
       </div>

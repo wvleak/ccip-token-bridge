@@ -1,15 +1,42 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import BridgeCard from "./BridgeCard";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
 import { useStateContext } from "../../context";
 
 const Bridge = () => {
-  const { address, bridge, swapAndBridge, connect } = useStateContext();
+  const {
+    address,
+    bridge,
+    swapAndBridge,
+    connect,
+    getBalance,
+    getSwapAmount,
+    getUsdPrice,
+  } = useStateContext();
 
-  const handlePriceChange = (value) => {
+  const handlePriceChange = async (value) => {
     setIsLoading(true);
-    setSwapAmount(value);
+    //await getUsdPrice(value);
+    setFromAmount(value);
+    setFromUsdPrice(await getUsdPrice(fromAmout));
+    if (fromToken != toToken) {
+      console.log(
+        await getSwapAmount(fromNetwork, fromToken, toToken, fromAmout)
+      );
+      !value
+        ? setToAmount(null)
+        : setToAmount(
+            await getSwapAmount(fromNetwork, fromToken, toToken, fromAmout)
+          );
+    } else {
+      !value ? setToAmount(null) : setToAmount(value);
+    }
 
+    setToUsdPrice(
+      await getUsdPrice(
+        await getSwapAmount(fromNetwork, fromToken, toToken, fromAmout)
+      )
+    );
     setIsLoading(false);
   };
   const [fromNetwork, setFromNetwork] = useState("Sepolia");
@@ -17,9 +44,14 @@ const Bridge = () => {
   const [fromToken, setFromToken] = useState("BnM");
   const [toToken, setToToken] = useState("BnM");
   const [isLoading, setIsLoading] = useState(false);
-  const [swapAmout, setSwapAmount] = useState(null);
+  const [fromAmout, setFromAmount] = useState(null);
+  const [toAmout, setToAmount] = useState(null);
+  const [fromBalance, setFromBalance] = useState(0);
+  const [toBalance, setToBalance] = useState(0);
+  const [fromUsdPrice, setFromUsdPrice] = useState(0);
+  const [toUsdPrice, setToUsdPrice] = useState(0);
 
-  const changeNetwork = (direction, network) => {
+  const changeNetwork = async (direction, network) => {
     if (direction == "From") {
       setFromNetwork(network);
       if (toNetwork == network) {
@@ -43,6 +75,19 @@ const Bridge = () => {
     }
   };
 
+  useEffect(() => {
+    const resetBalance = () => {
+      setFromBalance(0);
+      setToBalance(0);
+    };
+    const updateBalance = async () => {
+      setFromBalance(await getBalance(fromNetwork, fromToken));
+      setToBalance(await getBalance(toNetwork, toToken));
+    };
+    address ? updateBalance() : resetBalance();
+    //updateBalance();
+  }, [fromNetwork, toNetwork, fromToken, toToken, address]);
+
   return (
     <section className="relative mb-10 mx-auto my-auto flex flex-col gap-5 mt-[75px] max-w-[700px] w-[80vw]">
       <BridgeCard
@@ -52,7 +97,9 @@ const Bridge = () => {
         token={fromToken}
         setToken={setFromToken}
         onPriceChange={handlePriceChange}
-        swapAmount={swapAmout}
+        amount={fromAmout}
+        balance={fromBalance}
+        usdPrice={fromUsdPrice}
       />
       <div className="absolute top-[213px] right-[50%] border border-gray-200 rounded-full w-10 h-10 bg-gray-400 backdrop-blur-lg bg-opacity-5 flex justify-center">
         <SwapVertIcon className="my-auto" />
@@ -64,6 +111,9 @@ const Bridge = () => {
         setNetwork={changeNetwork}
         token={toToken}
         setToken={setToToken}
+        balance={toBalance}
+        amount={toAmout}
+        usdPrice={toUsdPrice}
         isLoading={isLoading}
       />
       <button
