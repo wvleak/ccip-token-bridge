@@ -1,70 +1,16 @@
 import React, { useContext, createContext } from "react";
-import {
-  useAddress,
-  useContract,
-  useMetamask,
-  useContractWrite,
-} from "@thirdweb-dev/react";
+import { useAddress, useContract, useMetamask } from "@thirdweb-dev/react";
 import { useDisconnect } from "@thirdweb-dev/react";
 
 import { ethers } from "ethers";
 
 import { contract_abi } from "../utils/contract_abi";
+import { networks } from "../utils/networks";
 
 // Networks identifiers
 const networkId = {
   Sepolia: "16015286601757825753",
   Mumbai: "12532609583862916517",
-};
-
-const networks = {
-  Sepolia: {
-    rpcUrl: "https://sepolia.infura.io/v3/7abc4fcbab5a4df096b366dd89b46f6a",
-    BnM: "0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05",
-    LnM: "0x466D489b6d36E7E3b824ef491C225F5830E81cC1",
-  },
-  Mumbai: {
-    rpcUrl:
-      "https://polygon-mumbai.infura.io/v3/7abc4fcbab5a4df096b366dd89b46f6a",
-    BnM: "0xf1E3A5842EeEF51F2967b3F05D45DD4f4205FF40",
-    LnM: "0xc1c76a8c5bFDE1Be034bbcD930c668726E7C1987",
-  },
-  "OP Testnet": {
-    rpcUrl:
-      "https://optimism-goerli.infura.io/v3/7abc4fcbab5a4df096b366dd89b46f6a",
-    BnM: "0xaBfE9D11A2f1D61990D1d253EC98B5Da00304F16",
-    LnM: "0x835833d556299CdEC623e7980e7369145b037591",
-  },
-  "Arbitrum Goerli": {
-    rpcUrl:
-      "https://arbitrum-goerli.infura.io/v3/7abc4fcbab5a4df096b366dd89b46f6a",
-    BnM: "0x0579b4c1C8AcbfF13c6253f1B10d66896Bf399Ef",
-    LnM: "0x0E14dBe2c8e1121902208be173A3fb91Bb125CDB",
-  },
-  "Avalanche Fuji": {
-    rpcUrl:
-      "https://avalanche-fuji.infura.io/v3/7abc4fcbab5a4df096b366dd89b46f6a",
-    BnM: "0xD21341536c5cF5EB1bcb58f6723cE26e8D8E90e4",
-    LnM: "0x70F5c5C40b873EA597776DA2C21929A8282A3b35",
-  },
-};
-
-// Token address
-const tokenAddress = {
-  Sepolia: {
-    BnM: "0xfd57b4ddbf88a4e07ff4e34c487b99af2fe82a05",
-    LnM: "0x466d489b6d36e7e3b824ef491c225f5830e81cc1",
-  },
-  Mumbai: {
-    BnM: "0xfd57b4ddbf88a4e07ff4e34c487b99af2fe82a05",
-    LnM: "0x466d489b6d36e7e3b824ef491c225f5830e81cc1",
-  },
-};
-
-// Contract addresses
-const contractAddress = {
-  Sepolia: "0xc4a03210542E07Ca26f9798054DF0d2ab5A6CEAE",
-  Mumbai: "0x0F0C2a062C1865e969b99bEE4C43aDCdcfdB5ba0",
 };
 
 // Create a context to manage state and actions
@@ -76,6 +22,7 @@ export const StateContextProvider = ({ children }) => {
     "0xaAEEf1d1C542e54C4Bd90C1D89Ed8FE1d14D539A",
     contract_abi
   );
+
   // const { mumbaiContract } = useContract(
   //   "0x0F0C2a062C1865e969b99bEE4C43aDCdcfdB5ba0",
   //   contract_abi
@@ -117,19 +64,24 @@ export const StateContextProvider = ({ children }) => {
     );
 
     const BridgeContract = await new ethers.Contract(
-      contractAddress[network],
+      networks[network],
       contract_abi,
       provider
     );
 
-    const swapAmount = await BridgeContract.getSwapAmount(
-      networks[network][fromToken],
-      networks[network][toToken],
-      ethers.utils.parseEther(amount)
-    );
-    console.log("swapAmount", parseFloat(swapAmount));
+    try {
+      const swapAmount = await BridgeContract.getSwapAmount(
+        networks[network][fromToken],
+        networks[network][toToken],
+        ethers.utils.parseEther(amount)
+      );
+      console.log("swapAmount", parseFloat(swapAmount));
 
-    return ethers.utils.formatEther(swapAmount);
+      return ethers.utils.formatEther(swapAmount);
+    } catch (error) {
+      console.log(error);
+      return null;
+    }
   };
 
   const getUsdPrice = async (amount) => {
@@ -156,67 +108,99 @@ export const StateContextProvider = ({ children }) => {
     token,
     swapAmount
   ) => {
-    //let provider = new ethers.providers.Web3Provider(window.ethereum);
-    let provider = new ethers.providers.JsonRpcProvider(
-      "https://polygon-mumbai.infura.io/v3/7abc4fcbab5a4df096b366dd89b46f6a"
-    );
-    //let signer = provider.getSigner();
+    let provider = new ethers.providers.Web3Provider(window.ethereum);
+    // let provider = new ethers.providers.JsonRpcProvider(
+    //   "https://polygon-mumbai.infura.io/v3/7abc4fcbab5a4df096b366dd89b46f6a"
+    // );
+    let signer = provider.getSigner();
+
     const BnMcontract = await new ethers.Contract(
-      BnMAddress,
+      networks[sourceNetwork][token],
       BnMInterface,
-      provider
+      signer
     );
     //console.log("Provider:", networks[sourceNetwork]["BnM"]);
-    const balance = await BnMcontract.balanceOf(address);
-    console.log("balance:", balance);
-    console.log("swapAmount", swapAmount);
+    // const balance = await BnMcontract.balanceOf(address);
+    // console.log("balance:", balance);
+    // console.log("swapAmount", swapAmount);
     console.log(ethers.utils.parseEther(swapAmount));
     const amount = ethers.utils.parseEther(swapAmount);
     console.log(sourceNetwork);
-    // switch (sourceNetwork) {
-    //   case "Sepolia":
-    //     console.log("1");
-    //     //console.log(tokenAddress[sourceNetwork]);
-    //     const fees = await contract.call("getBridgeFees", [
-    //       networkId[destinationNetwork],
-    //       address,
-    //       tokenAddress[sourceNetwork][token],
-    //       amount,
-    //     ]);
-    //     console.log(fees);
-
-    //     await BnMcontract.approve(
-    //       "0xaAEEf1d1C542e54C4Bd90C1D89Ed8FE1d14D539A",
-    //       amount
-    //     );
-
-    //     try {
-    //       console.log("2");
-    //       const data = await contract.call(
-    //         "bridge",
-    //         [
-    //           networkId[destinationNetwork],
-    //           address,
-    //           tokenAddress[sourceNetwork][token],
-    //           amount,
-    //         ],
-    //         {
-    //           value: fees,
-    //         }
-    //       );
-    //       console.log("Contract call success", data);
-    //       return true;
-    //     } catch (error) {
-    //       console.log("Contract call failure", error);
-    //       return false;
-    //     }
-    //   case "Mumbai":
-    //     break;
-    // }
-  };
-  const swapAndBridge = (sourceNetwork, destinationNetwork) => {
     switch (sourceNetwork) {
       case "Sepolia":
+        console.log("1");
+        //console.log(tokenAddress[sourceNetwork]);
+        const fees = await contract.call("getBridgeFees", [
+          networkId[destinationNetwork],
+          address,
+          tokenAddress[sourceNetwork][token],
+          amount,
+        ]);
+        console.log(parseFloat(fees));
+
+        await BnMcontract.approve(
+          "0xaAEEf1d1C542e54C4Bd90C1D89Ed8FE1d14D539A",
+          amount
+        );
+
+        let provider = new ethers.providers.JsonRpcProvider(
+          networks[sourceNetwork]["rpcUrl"]
+        );
+        let testContract = await new ethers.Contract(
+          networks[sourceNetwork]["contract"],
+          contract_abi,
+          signer
+        );
+
+        try {
+          console.log("2");
+          // const data = await contract.call(
+          //   "bridge",
+          //   [
+          //     networkId[destinationNetwork],
+          //     address,
+          //     tokenAddress[sourceNetwork][token],
+          //     amount,
+          //   ],
+          //   {
+          //     value: fees,
+          //   }
+          // );
+          const data = await testContract.bridge(
+            networkId[destinationNetwork],
+            address,
+            tokenAddress[sourceNetwork][token],
+            amount,
+            {
+              gasLimit: 20000000,
+              value: fees,
+            }
+          );
+          console.log("Contract call success", data);
+          return true;
+        } catch (error) {
+          console.log("Contract call failure", error);
+          return false;
+        }
+      case "Mumbai":
+        await BnMcontract.approve(
+          "0xaAEEf1d1C542e54C4Bd90C1D89Ed8FE1d14D539A",
+          amount
+        );
+        break;
+    }
+  };
+  const swapAndBridge = async (sourceNetwork, destinationNetwork) => {
+    switch (sourceNetwork) {
+      case "Sepolia":
+        let provider = new ethers.providers.JsonRpcProvider(
+          networks[sourceNetwork]["rpcUrl"]
+        );
+        let contract = await new ethers.Contract(
+          networks[sourceNetwork]["contract"],
+          contract_abi,
+          provider
+        );
         break;
       case "Mumbai":
         break;

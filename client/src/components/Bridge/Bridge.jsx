@@ -16,9 +16,8 @@ const Bridge = () => {
 
   const handlePriceChange = async (value) => {
     setIsLoading(true);
-    //await getUsdPrice(value);
     setFromAmount(value);
-    setFromUsdPrice(await getUsdPrice(fromAmout));
+    //setFromUsdPrice(await getUsdPrice(fromAmout));
     if (fromToken != toToken) {
       console.log(
         await getSwapAmount(fromNetwork, fromToken, toToken, fromAmout)
@@ -32,11 +31,11 @@ const Bridge = () => {
       !value ? setToAmount(null) : setToAmount(value);
     }
 
-    setToUsdPrice(
-      await getUsdPrice(
-        await getSwapAmount(fromNetwork, fromToken, toToken, fromAmout)
-      )
-    );
+    // setToUsdPrice(
+    //   await getUsdPrice(
+    //     await getSwapAmount(fromNetwork, fromToken, toToken, fromAmout)
+    //   )
+    // );
     setIsLoading(false);
   };
   const [fromNetwork, setFromNetwork] = useState("Sepolia");
@@ -71,7 +70,7 @@ const Bridge = () => {
     if (!address) {
       connect();
     } else if (fromToken == toToken) {
-      await bridge(fromNetwork, toNetwork, fromToken, swapAmout);
+      await bridge(fromNetwork, toNetwork, fromToken, fromAmout);
     }
   };
 
@@ -85,8 +84,17 @@ const Bridge = () => {
       setToBalance(await getBalance(toNetwork, toToken));
     };
     address ? updateBalance() : resetBalance();
-    //updateBalance();
   }, [fromNetwork, toNetwork, fromToken, toToken, address]);
+
+  useEffect(() => {
+    const setUsdPrices = async () => {
+      fromAmout
+        ? setFromUsdPrice(await getUsdPrice(fromAmout))
+        : setFromUsdPrice(0);
+      toAmout ? setToUsdPrice(await getUsdPrice(toAmout)) : setToUsdPrice(0);
+    };
+    setUsdPrices();
+  }, [fromAmout, toAmout]);
 
   return (
     <section className="relative mb-10 mx-auto my-auto flex flex-col gap-5 mt-[75px] max-w-[700px] w-[80vw]">
