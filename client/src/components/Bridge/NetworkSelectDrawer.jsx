@@ -6,7 +6,7 @@ const NetworkSelectDrawer = ({ open, onSelect, direction }) => {
     "Arbitrum Goerli",
     "Mumbai",
     "OP Testnet",
-    "BNB Testnet",
+    "Base Goerli",
     "Avalanche Fuji",
   ];
   return (

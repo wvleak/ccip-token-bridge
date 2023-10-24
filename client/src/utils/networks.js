@@ -1,11 +1,13 @@
 export const networks = {
   Sepolia: {
+    id: "16015286601757825753",
     contract: "0xc4a03210542E07Ca26f9798054DF0d2ab5A6CEAE",
     rpcUrl: "https://sepolia.infura.io/v3/7abc4fcbab5a4df096b366dd89b46f6a",
     BnM: "0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05",
     LnM: "0x466D489b6d36E7E3b824ef491C225F5830E81cC1",
   },
   Mumbai: {
+    id: "12532609583862916517",
     contract: "0x0F0C2a062C1865e969b99bEE4C43aDCdcfdB5ba0",
     rpcUrl:
       "https://polygon-mumbai.infura.io/v3/7abc4fcbab5a4df096b366dd89b46f6a",
@@ -29,5 +31,11 @@ export const networks = {
       "https://avalanche-fuji.infura.io/v3/7abc4fcbab5a4df096b366dd89b46f6a",
     BnM: "0xD21341536c5cF5EB1bcb58f6723cE26e8D8E90e4",
     LnM: "0x70F5c5C40b873EA597776DA2C21929A8282A3b35",
+  },
+  "Base Goerli": {
+    rpcUrl:
+      "https://base-goerli.g.alchemy.com/v2/mo1u1967ghbpDkdolKs1BOcBkukl4rMP",
+    BnM: "0xbf9036529123de264bfa0fc7362fe25b650d4b16",
+    LnM: "0x73ed16c1a61b098fd6924cce5cc6a9a30348d944",
   },
 };

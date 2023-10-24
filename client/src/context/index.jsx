@@ -1,5 +1,5 @@
 import React, { useContext, createContext } from "react";
-import { useAddress, useContract, useMetamask } from "@thirdweb-dev/react";
+import { useAddress, useMetamask } from "@thirdweb-dev/react";
 import { useDisconnect } from "@thirdweb-dev/react";
 
 import { ethers } from "ethers";
@@ -7,42 +7,21 @@ import { ethers } from "ethers";
 import { contract_abi } from "../utils/contract_abi";
 import { networks } from "../utils/networks";
 
-// Networks identifiers
-const networkId = {
-  Sepolia: "16015286601757825753",
-  Mumbai: "12532609583862916517",
-};
-
 // Create a context to manage state and actions
 const StateContext = createContext();
 
 export const StateContextProvider = ({ children }) => {
-  //Add all L2s contracts
-  const { contract } = useContract(
-    "0xaAEEf1d1C542e54C4Bd90C1D89Ed8FE1d14D539A",
-    contract_abi
-  );
-
-  // const { mumbaiContract } = useContract(
-  //   "0x0F0C2a062C1865e969b99bEE4C43aDCdcfdB5ba0",
-  //   contract_abi
-  // );
-
   // Get the user's address, connect, and disconnect functions.
   const address = useAddress();
   const connect = useMetamask();
   const disconnect = useDisconnect();
 
-  const BnMInterface = [
-    "function approve(address spender, uint256 amount) external returns (bool)",
-    "function balanceOf(address owner) external view returns (uint256)",
-  ];
   const TokenInterface = [
     "function approve(address spender, uint256 amount) external returns (bool)",
     "function balanceOf(address owner) external view returns (uint256)",
   ];
-  const BnMAddress = "0xf1E3A5842EeEF51F2967b3F05D45DD4f4205FF40";
 
+  // Return the token balance
   const getBalance = async (network, token) => {
     let provider = new ethers.providers.JsonRpcProvider(
       networks[network]["rpcUrl"]
@@ -55,9 +34,9 @@ export const StateContextProvider = ({ children }) => {
 
     const balance = await TokenContract.balanceOf(address);
     return ethers.utils.formatEther(balance);
-    //return 10;
   };
 
+  // Return the quote
   const getSwapAmount = async (network, fromToken, toToken, amount) => {
     let provider = new ethers.providers.JsonRpcProvider(
       networks[network]["rpcUrl"]
@@ -84,6 +63,7 @@ export const StateContextProvider = ({ children }) => {
     }
   };
 
+  // Return the price of token amount in usd
   const getUsdPrice = async (amount) => {
     let provider = new ethers.providers.JsonRpcProvider(
       networks["Sepolia"]["rpcUrl"]
@@ -98,112 +78,149 @@ export const StateContextProvider = ({ children }) => {
     const priceInWei = await priceFeedContract.latestAnswer();
     const priceInUSD = ethers.utils.formatUnits(priceInWei, 8); // Convert from Wei to USD
 
-    console.log(`Current ETH Price in USD: $${amount * priceInUSD}`);
+    console.log(`value in USD: $${amount * priceInUSD}`);
     return amount * priceInUSD;
   };
 
-  const bridge = async (
-    sourceNetwork,
-    destinationNetwork,
-    token,
-    swapAmount
-  ) => {
+  // Bridge token amount
+  const bridge = async (sourceNetwork, destinationNetwork, token, amount) => {
     let provider = new ethers.providers.Web3Provider(window.ethereum);
-    // let provider = new ethers.providers.JsonRpcProvider(
-    //   "https://polygon-mumbai.infura.io/v3/7abc4fcbab5a4df096b366dd89b46f6a"
-    // );
     let signer = provider.getSigner();
 
-    const BnMcontract = await new ethers.Contract(
+    const TokenContract = await new ethers.Contract(
       networks[sourceNetwork][token],
-      BnMInterface,
+      TokenInterface,
       signer
     );
-    //console.log("Provider:", networks[sourceNetwork]["BnM"]);
-    // const balance = await BnMcontract.balanceOf(address);
-    // console.log("balance:", balance);
-    // console.log("swapAmount", swapAmount);
-    console.log(ethers.utils.parseEther(swapAmount));
-    const amount = ethers.utils.parseEther(swapAmount);
-    console.log(sourceNetwork);
-    switch (sourceNetwork) {
-      case "Sepolia":
-        console.log("1");
-        //console.log(tokenAddress[sourceNetwork]);
-        const fees = await contract.call("getBridgeFees", [
-          networkId[destinationNetwork],
-          address,
-          tokenAddress[sourceNetwork][token],
-          amount,
-        ]);
-        console.log(parseFloat(fees));
+    const contract = await new ethers.Contract(
+      networks[sourceNetwork]["contract"],
+      contract_abi,
+      signer
+    );
 
-        await BnMcontract.approve(
-          "0xaAEEf1d1C542e54C4Bd90C1D89Ed8FE1d14D539A",
-          amount
-        );
+    const transferAmount = ethers.utils.parseEther(amount);
 
-        let provider = new ethers.providers.JsonRpcProvider(
-          networks[sourceNetwork]["rpcUrl"]
-        );
-        let testContract = await new ethers.Contract(
-          networks[sourceNetwork]["contract"],
-          contract_abi,
-          signer
-        );
+    const fees = await contract.getBridgeFees(
+      networks[destinationNetwork]["id"],
+      address,
+      networks[sourceNetwork][token],
+      transferAmount
+    );
 
-        try {
-          console.log("2");
-          // const data = await contract.call(
-          //   "bridge",
-          //   [
-          //     networkId[destinationNetwork],
-          //     address,
-          //     tokenAddress[sourceNetwork][token],
-          //     amount,
-          //   ],
-          //   {
-          //     value: fees,
-          //   }
-          // );
-          const data = await testContract.bridge(
-            networkId[destinationNetwork],
-            address,
-            tokenAddress[sourceNetwork][token],
-            amount,
-            {
-              gasLimit: 20000000,
-              value: fees,
-            }
-          );
-          console.log("Contract call success", data);
-          return true;
-        } catch (error) {
-          console.log("Contract call failure", error);
-          return false;
+    console.log(parseFloat(fees));
+
+    try {
+      console.log("1. Approving token transfer...");
+
+      // Send the approval transaction
+      await TokenContract.approve(
+        networks[sourceNetwork]["contract"],
+        transferAmount
+      );
+      console.log("Approval transaction successful");
+
+      console.log("2. Initiating bridge transaction...");
+
+      // Send the bridge transaction
+      const txResponse = await contract.bridge(
+        networks[destinationNetwork]["id"],
+        address,
+        networks[sourceNetwork][token],
+        transferAmount,
+        {
+          gasLimit: 20000000,
+          value: fees,
         }
-      case "Mumbai":
-        await BnMcontract.approve(
-          "0xaAEEf1d1C542e54C4Bd90C1D89Ed8FE1d14D539A",
-          amount
-        );
-        break;
+      );
+
+      // Wait for the transaction to be mined and get the receipt
+      const txReceipt = await txResponse.wait();
+
+      if (txReceipt.status === 1) {
+        console.log("Bridge transaction successful");
+        return true;
+      } else {
+        console.error("Bridge transaction failed");
+        return false;
+      }
+    } catch (error) {
+      console.error("Transaction error:", error);
+      return false;
     }
   };
-  const swapAndBridge = async (sourceNetwork, destinationNetwork) => {
-    switch (sourceNetwork) {
-      case "Sepolia":
-        let provider = new ethers.providers.JsonRpcProvider(
-          networks[sourceNetwork]["rpcUrl"]
-        );
-        let contract = await new ethers.Contract(
-          networks[sourceNetwork]["contract"],
-          contract_abi,
-          provider
-        );
-        break;
-      case "Mumbai":
-        break;
+
+  // Swap before bridge token
+  const swapAndBridge = async (
+    sourceNetwork,
+    destinationNetwork,
+    fromToken,
+    toToken,
+    amount
+  ) => {
+    let provider = new ethers.providers.Web3Provider(window.ethereum);
+    let signer = provider.getSigner();
+
+    const TokenContract = await new ethers.Contract(
+      networks[sourceNetwork][fromToken],
+      TokenInterface,
+      signer
+    );
+    const contract = await new ethers.Contract(
+      networks[sourceNetwork]["contract"],
+      contract_abi,
+      signer
+    );
+
+    const transferAmount = ethers.utils.parseEther(amount);
+
+    const fees = await contract.getSwapAndBridgeFees(
+      networks[destinationNetwork]["id"],
+      address,
+      networks[sourceNetwork][fromToken],
+      networks[sourceNetwork][toToken],
+      transferAmount
+    );
+
+    console.log(parseFloat(fees));
+
+    try {
+      console.log("1. Approving token transfer...");
+
+      // Send the approval transaction
+      await TokenContract.approve(
+        networks[sourceNetwork]["contract"],
+        transferAmount
+      );
+      console.log("Approval transaction successful");
+
+      console.log("2. Initiating swap and bridge transaction...");
+
+      // Send the transaction
+      const txResponse = await contract.swapAndBridge(
+        networks[destinationNetwork]["id"],
+        address,
+        networks[sourceNetwork][fromToken],
+        networks[sourceNetwork][toToken],
+        transferAmount,
+        {
+          gasLimit: 20000000,
+          value: fees,
+        }
+      );
+
+      // Wait for the transaction to be mined and get the receipt
+      const txReceipt = await txResponse.wait();
+
+      if (txReceipt.status === 1) {
+        console.log("Bridge transaction successful");
+        return true;
+      } else {
+        console.error("Bridge transaction failed");
+        return false;
+      }
+    } catch (error) {
+      console.error("Transaction error:", error);
+      return false;
     }
   };
 
