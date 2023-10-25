@@ -2,7 +2,6 @@ import React from "react";
 
 import { useMetamask, useAddress, useDisconnect } from "@thirdweb-dev/react";
 import { Sepolia } from "@thirdweb-dev/chains";
-import WalletIcon from "@mui/icons-material/Wallet";
 import LogoutIcon from "@mui/icons-material/Logout";
 
 const TopBar = () => {
@@ -19,13 +18,14 @@ const TopBar = () => {
           width={30}
           height={30}
           className="object-contain"
-          d
         />
-        <p className="logo_text">SimpleBridge</p>
+        <p className="logo_text font-mono italic">SimpleBridge</p>
       </div>
       {address ? (
         <div className="flex items-center gap-2">
-          <p className="text-black truncate w-[70px]">{address}</p>
+          <p className="text-black truncate w-[100px] rounded-lg bg-gray-100 py-2 px-3 font-medium my-auto">
+            {address}
+          </p>
           <LogoutIcon
             onClick={disconnect}
             className="cursor-pointer hover:text-gray-400"

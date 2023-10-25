@@ -16,6 +16,7 @@ export const networks = {
   },
   "OP Testnet": {
     id: "2664363617261496610",
+    contract: "0xAD53EbcBdc27db74645A3151D4D24d4f5AcA59bF",
     rpcUrl:
       "https://optimism-goerli.infura.io/v3/7abc4fcbab5a4df096b366dd89b46f6a",
     BnM: "0xaBfE9D11A2f1D61990D1d253EC98B5Da00304F16",
@@ -23,6 +24,7 @@ export const networks = {
   },
   "Arbitrum Goerli": {
     id: "6101244977088475029",
+    contract: "0xAD53EbcBdc27db74645A3151D4D24d4f5AcA59bF",
     rpcUrl:
       "https://arbitrum-goerli.infura.io/v3/7abc4fcbab5a4df096b366dd89b46f6a",
     BnM: "0x0579b4c1C8AcbfF13c6253f1B10d66896Bf399Ef",
@@ -30,6 +32,7 @@ export const networks = {
   },
   "Avalanche Fuji": {
     id: "14767482510784806043",
+    contract: "0xAD53EbcBdc27db74645A3151D4D24d4f5AcA59bF",
     rpcUrl:
       "https://avalanche-fuji.infura.io/v3/7abc4fcbab5a4df096b366dd89b46f6a",
     BnM: "0xD21341536c5cF5EB1bcb58f6723cE26e8D8E90e4",
@@ -37,6 +40,7 @@ export const networks = {
   },
   "Base Goerli": {
     id: "5790810961207155433",
+    contract: "0xAD53EbcBdc27db74645A3151D4D24d4f5AcA59bF",
     rpcUrl:
       "https://base-goerli.g.alchemy.com/v2/mo1u1967ghbpDkdolKs1BOcBkukl4rMP",
     BnM: "0xbf9036529123de264bfa0fc7362fe25b650d4b16",

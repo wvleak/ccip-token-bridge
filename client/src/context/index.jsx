@@ -54,7 +54,7 @@ export const StateContextProvider = ({ children }) => {
         networks[network][toToken],
         ethers.utils.parseEther(amount)
       );
-      console.log("swapAmount", parseFloat(swapAmount));
+      //console.log("swapAmount", parseFloat(swapAmount));
 
       return ethers.utils.formatEther(swapAmount);
     } catch (error) {
@@ -78,7 +78,7 @@ export const StateContextProvider = ({ children }) => {
     const priceInWei = await priceFeedContract.latestAnswer();
     const priceInUSD = ethers.utils.formatUnits(priceInWei, 8); // Convert from Wei to USD
 
-    console.log(`value in USD: $${amount * priceInUSD}`);
+    //console.log(`value in USD: $${amount * priceInUSD}`);
     return amount * priceInUSD;
   };
 
@@ -107,7 +107,7 @@ export const StateContextProvider = ({ children }) => {
       transferAmount
     );
 
-    console.log(parseFloat(fees));
+    console.log("CCIP fees:", parseFloat(fees));
 
     try {
       console.log("1. Approving token transfer...");
@@ -135,10 +135,11 @@ export const StateContextProvider = ({ children }) => {
 
       // Wait for the transaction to be mined and get the receipt
       const txReceipt = await txResponse.wait();
+      console.log("Receipt:", txReceipt);
 
       if (txReceipt.status === 1) {
         console.log("Bridge transaction successful");
-        return true;
+        return txReceipt.transactionHash;
       } else {
         console.error("Bridge transaction failed");
         return false;
@@ -181,7 +182,7 @@ export const StateContextProvider = ({ children }) => {
       transferAmount
     );
 
-    console.log(parseFloat(fees));
+    console.log("CCIP fees:", parseFloat(fees));
 
     try {
       console.log("1. Approving token transfer...");
@@ -210,10 +211,11 @@ export const StateContextProvider = ({ children }) => {
 
       // Wait for the transaction to be mined and get the receipt
       const txReceipt = await txResponse.wait();
+      console.log("Receipt:", txReceipt);
 
       if (txReceipt.status === 1) {
         console.log("Bridge transaction successful");
-        return true;
+        return txReceipt.transactionHash;
       } else {
         console.error("Bridge transaction failed");
         return false;

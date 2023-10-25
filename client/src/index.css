@@ -77,14 +77,6 @@
   @apply max-sm:hidden font-semibold text-lg text-black tracking-wide;
 }
 
-.orange_gradient {
-  @apply bg-gradient-to-r from-amber-500 via-orange-600 to-yellow-500 bg-clip-text text-transparent;
-}
-
-.green_gradient {
-  @apply bg-gradient-to-r from-green-400 to-green-500 bg-clip-text text-transparent;
-}
-
 .blue_gradient {
   @apply bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent;
 }
@@ -101,4 +93,18 @@
 .input::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+
+/* Custom CSS class for truncating text in the middle */
+.truncate-middle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.truncate-middle::before {
+  content: "";
+  display: inline-block;
+  width: 50%;
+  /* You can adjust the width as needed to control where the truncation happens */
 }

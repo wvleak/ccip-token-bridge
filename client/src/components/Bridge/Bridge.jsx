@@ -4,6 +4,7 @@ import SwapVertIcon from "@mui/icons-material/SwapVert";
 import { useStateContext } from "../../context";
 import { networks } from "../../utils/networks_info";
 import LoadingScreen from "../Loaders/LoadingScreen";
+import TransactionReceipt from "../TransactionReceipt";
 
 const Bridge = () => {
   // Context
@@ -32,18 +33,21 @@ const Bridge = () => {
   const [inTransaction, setInTransaction] = useState(false);
   const [balanceLoading, setBalanceLoading] = useState(false);
   const [priceLoading, setPriceLoading] = useState(false);
+  const [txHash, setTxHash] = useState(null);
+  const [txConfirmed, setTxConfirmed] = useState(false);
 
   // HANDLERS
   const handleClick = async () => {
+    let txHash;
     if (!address) {
       connect();
     } else if (fromToken == toToken) {
       setInTransaction(true);
-      await bridge(fromNetwork, toNetwork, fromToken, fromAmout);
+      txHash = await bridge(fromNetwork, toNetwork, fromToken, fromAmout);
       setInTransaction(false);
     } else {
       setInTransaction(true);
-      await swapAndBridge(
+      txHash = await swapAndBridge(
         fromNetwork,
         toNetwork,
         fromToken,
@@ -51,6 +55,11 @@ const Bridge = () => {
         fromAmout
       );
       setInTransaction(false);
+    }
+
+    if (txHash) {
+      setTxHash(txHash);
+      setTxConfirmed(true);
     }
   };
 
@@ -139,6 +148,9 @@ const Bridge = () => {
   return (
     <section className="relative mb-10 mx-auto my-auto flex flex-col gap-5 mt-[75px] max-w-[700px] w-[80vw]">
       {inTransaction && <LoadingScreen text="Transaction is in progress" />}
+      {txConfirmed && (
+        <TransactionReceipt txHash={txHash} close={setTxConfirmed} />
+      )}
       <BridgeCard
         direction="From"
         network={fromNetwork}
@@ -172,7 +184,7 @@ const Bridge = () => {
         className="w-full bg-blue-500 rounded-xl py-3 text-white text-2xl font-medium hover:opacity-60 transition duration-100"
         onClick={handleClick}
       >
-        Swap
+        {address ? "Swap" : "Connect Wallet"}
       </button>
     </section>
   );

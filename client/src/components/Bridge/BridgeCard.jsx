@@ -3,7 +3,7 @@ import TokenSelectModal from "./TokenSelectModal";
 import TokenSelect from "./TokenSelect";
 import NetworkSelect from "./NetworkSelect";
 import WalletIcon from "@mui/icons-material/Wallet";
-import SkeletonLoader from "../SkeletonLoader";
+import SkeletonLoader from "../Loaders/SkeletonLoader";
 
 const BridgeCard = ({
   direction,
