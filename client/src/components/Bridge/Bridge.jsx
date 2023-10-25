@@ -2,102 +2,11 @@ import React, { useState, useEffect } from "react";
 import BridgeCard from "./BridgeCard";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
 import { useStateContext } from "../../context";
-
-const networks = {
-  Sepolia: {
-    chainId: `0x${Number(11155111).toString(16)}`,
-    chainName: "Sepolia",
-    nativeCurrency: {
-      name: "ETH",
-      symbol: "ETH",
-      decimals: 18,
-    },
-    rpcUrls: [
-      "https://rpc.sepolia.org",
-      "wss://ethereum-sepolia.publicnode.com",
-      "https://gateway.tenderly.co/public/sepolia",
-      "https://eth-sepolia.public.blastapi.io",
-
-      "https://api.zan.top/node/v1/eth/sepolia/public",
-    ],
-    blockExplorerUrls: ["https://sepolia.etherscan.io/"],
-  },
-  Mumbai: {
-    chainId: `0x${Number(80001).toString(16)}`,
-    chainName: "Mumbai",
-    nativeCurrency: {
-      name: "MATIC",
-      symbol: "MATIC",
-      decimals: 18,
-    },
-    rpcUrls: [
-      "https://rpc-mumbai.maticvigil.com",
-      "https://polygon-mumbai-bor.publicnode.com",
-      "wss://polygon-mumbai-bor.publicnode.com",
-      "https://polygon-mumbai.gateway.tenderly.co",
-      "wss://polygon-mumbai.gateway.tenderly.co",
-    ],
-    blockExplorerUrls: ["https://mumbai.polygonscan.com"],
-  },
-  "OP Testnet": {
-    chainId: `0x${Number(420).toString(16)}`,
-    chainName: "Optimistic Ethereum Testnet Goerli",
-    nativeCurrency: {
-      name: "ETH",
-      symbol: "ETH",
-      decimals: 18,
-    },
-    rpcUrls: ["https://goerli.optimism.io/"],
-    blockExplorerUrls: ["https://goerli-optimism.etherscan.io/"],
-  },
-  "Arbitrum Goerli": {
-    chainId: `0x${Number(421613).toString(16)}`,
-    chainName: "Arbitrum Goerli",
-    nativeCurrency: {
-      name: "Arbitrum Goerli Ether",
-      symbol: "AGOR",
-      decimals: 18,
-    },
-    rpcUrls: [
-      "https://goerli-rollup.arbitrum.io/rpc",
-      "https://arbitrum-goerli.publicnode.com",
-      "wss://arbitrum-goerli.publicnode.com",
-    ],
-    blockExplorerUrls: ["https://goerli.arbiscan.io"],
-  },
-  "Avalanche Fuji": {
-    chainId: `0x${Number(43113).toString(16)}`,
-    chainName: "Avalanche Fuji",
-    nativeCurrency: {
-      name: "Avalanche",
-      symbol: "AVAX",
-      decimals: 18,
-    },
-    rpcUrls: [
-      "https://api.avax-test.network/ext/bc/C/rpc",
-      "https://avalanche-fuji-c-chain.publicnode.com",
-      "wss://avalanche-fuji-c-chain.publicnode.com",
-    ],
-    blockExplorerUrls: ["https://testnet.snowtrace.io"],
-  },
-  "Base Goerli": {
-    chainId: `0x${Number(84531).toString(16)}`,
-    chainName: "Base Goerli",
-    nativeCurrency: {
-      name: "ETH",
-      symbol: "ETH",
-      decimals: 18,
-    },
-    rpcUrls: [
-      "https://goerli.base.org",
-      "https://base-goerli.public.blastapi.io",
-      "https://base-goerli.publicnode.com",
-    ],
-    blockExplorerUrls: ["https://goerli.basescan.org/"],
-  },
-};
+import { networks } from "../../utils/networks_info";
+import LoadingScreen from "../Loaders/LoadingScreen";
 
 const Bridge = () => {
+  // Context
   const {
     address,
     bridge,
@@ -108,30 +17,7 @@ const Bridge = () => {
     getUsdPrice,
   } = useStateContext();
 
-  const handlePriceChange = async (value) => {
-    setIsLoading(true);
-    setFromAmount(value);
-    //setFromUsdPrice(await getUsdPrice(fromAmout));
-    if (fromToken != toToken) {
-      console.log(
-        await getSwapAmount(fromNetwork, fromToken, toToken, fromAmout)
-      );
-      !value
-        ? setToAmount(null)
-        : setToAmount(
-            await getSwapAmount(fromNetwork, fromToken, toToken, fromAmout)
-          );
-    } else {
-      !value ? setToAmount(null) : setToAmount(value);
-    }
-
-    // setToUsdPrice(
-    //   await getUsdPrice(
-    //     await getSwapAmount(fromNetwork, fromToken, toToken, fromAmout)
-    //   )
-    // );
-    setIsLoading(false);
-  };
+  // States
   const [fromNetwork, setFromNetwork] = useState("Sepolia");
   const [toNetwork, setToNetwork] = useState("Mumbai");
   const [fromToken, setFromToken] = useState("BnM");
@@ -143,26 +29,45 @@ const Bridge = () => {
   const [toBalance, setToBalance] = useState(0);
   const [fromUsdPrice, setFromUsdPrice] = useState(0);
   const [toUsdPrice, setToUsdPrice] = useState(0);
+  const [inTransaction, setInTransaction] = useState(false);
+  const [balanceLoading, setBalanceLoading] = useState(false);
+  const [priceLoading, setPriceLoading] = useState(false);
 
-  const changeWallet = async (network) => {
-    try {
-      if (!window.ethereum) throw new Error("No crypto wallet found");
-      await window.ethereum.request({
-        method: "wallet_addEthereumChain",
-        params: [
-          {
-            ...networks[network],
-          },
-        ],
-      });
-    } catch (err) {
-      setError(err.message);
+  // HANDLERS
+  const handleClick = async () => {
+    if (!address) {
+      connect();
+    } else if (fromToken == toToken) {
+      setInTransaction(true);
+      await bridge(fromNetwork, toNetwork, fromToken, fromAmout);
+      setInTransaction(false);
+    } else {
+      setInTransaction(true);
+      await swapAndBridge(
+        fromNetwork,
+        toNetwork,
+        fromToken,
+        toToken,
+        fromAmout
+      );
+      setInTransaction(false);
     }
   };
 
-  useEffect(() => {
-    changeWallet(fromNetwork);
-  }, [fromNetwork]);
+  // EFFECT FUNCTIONS
+  const changeAmount = async (value) => {
+    setIsLoading(true);
+    if (fromToken != toToken) {
+      !value
+        ? setToAmount(null)
+        : setToAmount(
+            await getSwapAmount(fromNetwork, fromToken, toToken, fromAmout)
+          );
+    } else {
+      !value ? setToAmount(null) : setToAmount(value);
+    }
+    setIsLoading(false);
+  };
 
   const changeNetwork = async (direction, network) => {
     if (direction == "From") {
@@ -180,21 +85,30 @@ const Bridge = () => {
     }
   };
 
-  const handleClick = async () => {
-    if (!address) {
-      connect();
-    } else if (fromToken == toToken) {
-      await bridge(fromNetwork, toNetwork, fromToken, fromAmout);
-    } else {
-      await swapAndBridge(
-        fromNetwork,
-        toNetwork,
-        fromToken,
-        toToken,
-        fromAmout
-      );
+  const changeWallet = async (network) => {
+    try {
+      if (!window.ethereum) throw new Error("No crypto wallet found");
+      await window.ethereum.request({
+        method: "wallet_addEthereumChain",
+        params: [
+          {
+            ...networks[network],
+          },
+        ],
+      });
+    } catch (err) {
+      setError(err.message);
     }
   };
+
+  // USE EFFECTS
+  useEffect(() => {
+    changeAmount(fromAmout);
+  }, [fromAmout, fromToken, toToken]);
+
+  useEffect(() => {
+    changeWallet(fromNetwork);
+  }, [fromNetwork]);
 
   useEffect(() => {
     const resetBalance = () => {
@@ -202,41 +116,47 @@ const Bridge = () => {
       setToBalance(0);
     };
     const updateBalance = async () => {
+      setBalanceLoading(true);
       setFromBalance(await getBalance(fromNetwork, fromToken));
       setToBalance(await getBalance(toNetwork, toToken));
+      setBalanceLoading(false);
     };
     address ? updateBalance() : resetBalance();
   }, [fromNetwork, toNetwork, fromToken, toToken, address]);
 
   useEffect(() => {
     const setUsdPrices = async () => {
+      setPriceLoading(true);
       fromAmout
         ? setFromUsdPrice(await getUsdPrice(fromAmout))
         : setFromUsdPrice(0);
       toAmout ? setToUsdPrice(await getUsdPrice(toAmout)) : setToUsdPrice(0);
+      setPriceLoading(false);
     };
     setUsdPrices();
   }, [fromAmout, toAmout]);
 
   return (
     <section className="relative mb-10 mx-auto my-auto flex flex-col gap-5 mt-[75px] max-w-[700px] w-[80vw]">
+      {inTransaction && <LoadingScreen text="Transaction is in progress" />}
       <BridgeCard
         direction="From"
         network={fromNetwork}
         setNetwork={changeNetwork}
         token={fromToken}
         setToken={setFromToken}
-        onPriceChange={handlePriceChange}
+        onAmountChange={(value) => setFromAmount(value)}
         amount={fromAmout}
         balance={fromBalance}
         usdPrice={fromUsdPrice}
+        balanceLoading={balanceLoading}
+        priceLoading={priceLoading}
       />
       <div className="absolute top-[213px] right-[50%] border border-gray-200 rounded-full w-10 h-10 bg-gray-400 backdrop-blur-lg bg-opacity-5 flex justify-center">
         <SwapVertIcon className="my-auto" />
       </div>
       <BridgeCard
         direction="To"
-        //onPriceChange={onPriceChange}
         network={toNetwork}
         setNetwork={changeNetwork}
         token={toToken}
@@ -245,6 +165,8 @@ const Bridge = () => {
         amount={toAmout}
         usdPrice={toUsdPrice}
         isLoading={isLoading}
+        balanceLoading={balanceLoading}
+        priceLoading={priceLoading}
       />
       <button
         className="w-full bg-blue-500 rounded-xl py-3 text-white text-2xl font-medium hover:opacity-60 transition duration-100"

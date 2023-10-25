@@ -15,24 +15,28 @@ export const networks = {
     LnM: "0xc1c76a8c5bFDE1Be034bbcD930c668726E7C1987",
   },
   "OP Testnet": {
+    id: "2664363617261496610",
     rpcUrl:
       "https://optimism-goerli.infura.io/v3/7abc4fcbab5a4df096b366dd89b46f6a",
     BnM: "0xaBfE9D11A2f1D61990D1d253EC98B5Da00304F16",
     LnM: "0x835833d556299CdEC623e7980e7369145b037591",
   },
   "Arbitrum Goerli": {
+    id: "6101244977088475029",
     rpcUrl:
       "https://arbitrum-goerli.infura.io/v3/7abc4fcbab5a4df096b366dd89b46f6a",
     BnM: "0x0579b4c1C8AcbfF13c6253f1B10d66896Bf399Ef",
     LnM: "0x0E14dBe2c8e1121902208be173A3fb91Bb125CDB",
   },
   "Avalanche Fuji": {
+    id: "14767482510784806043",
     rpcUrl:
       "https://avalanche-fuji.infura.io/v3/7abc4fcbab5a4df096b366dd89b46f6a",
     BnM: "0xD21341536c5cF5EB1bcb58f6723cE26e8D8E90e4",
     LnM: "0x70F5c5C40b873EA597776DA2C21929A8282A3b35",
   },
   "Base Goerli": {
+    id: "5790810961207155433",
     rpcUrl:
       "https://base-goerli.g.alchemy.com/v2/mo1u1967ghbpDkdolKs1BOcBkukl4rMP",
     BnM: "0xbf9036529123de264bfa0fc7362fe25b650d4b16",

@@ -42,14 +42,14 @@ export const StateContextProvider = ({ children }) => {
       networks[network]["rpcUrl"]
     );
 
-    const BridgeContract = await new ethers.Contract(
-      networks[network],
+    const bridgeContract = await new ethers.Contract(
+      networks[network]["contract"],
       contract_abi,
       provider
     );
 
     try {
-      const swapAmount = await BridgeContract.getSwapAmount(
+      const swapAmount = await bridgeContract.getSwapAmount(
         networks[network][fromToken],
         networks[network][toToken],
         ethers.utils.parseEther(amount)

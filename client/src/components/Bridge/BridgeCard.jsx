@@ -12,15 +12,14 @@ const BridgeCard = ({
   token,
   setToken,
   isLoading,
-  onPriceChange,
+  onAmountChange,
   amount,
   balance,
   usdPrice,
+  balanceLoading,
+  priceLoading,
 }) => {
   const [open, setOpen] = useState(false);
-  const [number, setNumber] = useState(null);
-  const [usdValue, setUsdValue] = useState(0);
-  //const [balance, setBalance] = useState(0);
 
   const formatValue = (value) => {
     const stringValue = value.toFixed(2).toString();
@@ -52,7 +51,7 @@ const BridgeCard = ({
             min={0}
             value={amount}
             onChange={(e) => {
-              onPriceChange(e.target.value);
+              onAmountChange(e.target.value);
             }}
             style={{ WebkitAppearance: "none" }}
           />
@@ -66,7 +65,6 @@ const BridgeCard = ({
             disabled
             min={0}
             value={amount}
-            onChange={() => setNumber(value)}
             style={{ WebkitAppearance: "none" }}
           />
         )}
@@ -74,26 +72,31 @@ const BridgeCard = ({
         <TokenSelect token={token} onClick={() => setOpen((prev) => !prev)} />
       </div>
       <div className="w-full flex justify-between p-5">
-        {isLoading ? (
+        {priceLoading ? (
           <SkeletonLoader style="w-[30%] h-9" />
         ) : (
           <h1 className="my-auto text-2xl text-gray-500">
             $ {formatValue(usdPrice)}
           </h1>
         )}
-        <div className="flex items-center gap-2">
-          <WalletIcon
-            className={direction == "From" ? "text-[#086bff]" : "text-gray-500"}
-          />
-          <h1
-            className={`my-auto text-2xl ${
-              direction == "From" ? "text-[#086bff]" : "text-gray-500"
-            }`}
-          >
-            {formatValue(parseFloat(balance))}
-            {/* {balance} */}
-          </h1>
-        </div>
+        {balanceLoading ? (
+          <SkeletonLoader style="w-[15%] h-9" />
+        ) : (
+          <div className="flex items-center gap-2">
+            <WalletIcon
+              className={
+                direction == "From" ? "text-[#086bff]" : "text-gray-500"
+              }
+            />
+            <h1
+              className={`my-auto text-2xl ${
+                direction == "From" ? "text-[#086bff]" : "text-gray-500"
+              }`}
+            >
+              {formatValue(parseFloat(balance))}
+            </h1>
+          </div>
+        )}
       </div>
     </div>
   );
