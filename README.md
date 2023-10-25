@@ -22,7 +22,7 @@ This application deploys a single contract across various chains. It leverages i
 - CCIP-BnM
 - CCIP-LnM
 
-To acquire these supported tokens, visit [this link](https://docs.chain.link/ccip/test-tokens#mint-tokens-in-the-documentation).
+To acquire these test tokens, visit [this link](https://docs.chain.link/ccip/test-tokens#mint-tokens-in-the-documentation).
 
 ## ⚠️ Disclaimer
 
