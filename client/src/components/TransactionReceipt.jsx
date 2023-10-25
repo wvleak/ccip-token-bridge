@@ -11,7 +11,7 @@ const TransactionReceipt = ({ txHash, close }) => {
             Transaction Approved
           </p>
           <img
-            src="/src/assets/success.png"
+            src="/public/assets/success.png"
             width={20}
             height={20}
             className="object-contain"

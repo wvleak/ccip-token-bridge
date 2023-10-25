@@ -13,7 +13,7 @@ const TopBar = () => {
     <nav className="w-full flex justify-between items-center py-5 top-0 z-20">
       <div className="flex items-center gap-2">
         <img
-          src="src/assets/blue-logo.png"
+          src="public/assets/blue-logo.png"
           alt="logo"
           width={30}
           height={30}

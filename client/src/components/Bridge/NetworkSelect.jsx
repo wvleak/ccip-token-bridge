@@ -10,7 +10,7 @@ const NetworkSelect = ({ network, changeNetwork, direction }) => {
       onClick={() => setOpen((prev) => !prev)}
     >
       <img
-        src={`src/assets/networks/${network}.png`}
+        src={`public/assets/networks/${network}.png`}
         alt="logo"
         width={15}
         height={15}
