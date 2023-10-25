@@ -10,10 +10,10 @@ const TopBar = () => {
   const disconnect = useDisconnect();
 
   return (
-    <nav className="w-full flex justify-between items-center py-5 top-0 z-20">
+    <nav className="w-full flex justify-between items-center py-5 top-0 z-0">
       <div className="flex items-center gap-2">
         <img
-          src="public/assets/blue-logo.png"
+          src="assets/blue-logo.png"
           alt="logo"
           width={30}
           height={30}

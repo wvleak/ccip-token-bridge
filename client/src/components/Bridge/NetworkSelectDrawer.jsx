@@ -22,7 +22,7 @@ const NetworkSelectDrawer = ({ open, onSelect, direction }) => {
               onClick={() => onSelect(direction, network)}
             >
               <img
-                src={`public/assets/networks/${network}.png`}
+                src={`assets/networks/${network}.png`}
                 alt="logo"
                 width={15}
                 height={15}

@@ -8,7 +8,7 @@ const TokenSelect = ({ token, onClick }) => {
       onClick={onClick}
     >
       <img
-        src="/public/assets/networks/Sepolia.png"
+        src="assets/networks/Sepolia.png"
         alt="logo"
         width={30}
         height={30}

@@ -31,7 +31,7 @@ const TokenSelectModal = ({ open, close, changeToken }) => {
             {tokens.map((token) => (
               <li className="hover:bg-gray-200 rounded-md p-1 flex gap-2">
                 <img
-                  src="/public/assets/networks/Sepolia.png"
+                  src="assets/networks/Sepolia.png"
                   alt="logo"
                   width={30}
                   height={30}
