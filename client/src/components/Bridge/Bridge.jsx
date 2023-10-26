@@ -67,11 +67,18 @@ const Bridge = () => {
   const changeAmount = async (value) => {
     setIsLoading(true);
     if (fromToken != toToken) {
-      !value
-        ? setToAmount(null)
-        : setToAmount(
-            await getSwapAmount(fromNetwork, fromToken, toToken, fromAmout)
-          );
+      if (!value) {
+        setToAmount(null);
+      } else {
+        const rawAmount = await getSwapAmount(
+          fromNetwork,
+          fromToken,
+          toToken,
+          fromAmout
+        );
+        const roundedAmount = parseFloat(rawAmount).toFixed(6); // Restrict to 4 decimal places
+        setToAmount(roundedAmount);
+      }
     } else {
       !value ? setToAmount(null) : setToAmount(value);
     }
