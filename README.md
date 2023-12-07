@@ -8,7 +8,9 @@ See [Live Demo.](https://ccip-token-bridge.vercel.app/)
 
 ## Description
 
-This application deploys a single contract across various chains. It leverages its own token balance for swaps using a constant product formula and facilitates token transfers through the CCIP router. It's important to note that a CCIP transaction can take up to 30 minutes for validation. Currently, this application is deployed on testnets, and it supports two test tokens: CCIP-BnM and CCIP-LnM. You can obtain these test tokens [here](https://docs.chain.link/ccip/test-tokens#mint-tokens-in-the-documentation). Please be aware that CCIP fees are paid in the native tokens of each respective blockchain, so make sure you have an adequate supply before engaging in any operations.
+This application deploys a single contract across various chains. It leverages its own token balance for swaps using a constant product formula and facilitates token transfers through the CCIP router. It's important to note that a CCIP transaction can take up to 30 minutes for validation. 
+
+Currently, this application is deployed on testnets, and it supports two test tokens: CCIP-BnM and CCIP-LnM. You can obtain these test tokens [here](https://docs.chain.link/ccip/test-tokens#mint-tokens-in-the-documentation). Please be aware that CCIP fees are paid in the native tokens of each respective blockchain, so make sure you have an adequate supply before engaging in any operations.
 
 ## Supported Networks
 - Ethereum Sepolia
